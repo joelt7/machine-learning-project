@@ -1,0 +1,37 @@
+def player(prev_play, opponent_history=[]):
+    if prev_play:
+        opponent_history.append(prev_play)
+
+    # State reset / Initial move
+    if len(opponent_history) < 3:
+        return "R"
+
+    # We use a dictionary to store patterns of length 3 and the move that followed
+    # This acts as our "memory"
+    n = 3
+    hist = opponent_history
+    
+    # We maintain a persistent dictionary across calls using a default argument
+    # Or by defining it outside if the environment allows
+    if not hasattr(player, "model"):
+        player.model = {}
+
+    # Update the model with the most recent sequence
+    if len(hist) > n:
+        pattern = "".join(hist[-n-1:-1])
+        current_move = hist[-1]
+        if pattern not in player.model:
+            player.model[pattern] = {"R": 0, "P": 0, "S": 0}
+        player.model[pattern][current_move] += 1
+
+    # Predict the next move based on the current last n moves
+    last_n = "".join(hist[-n:])
+    if last_n in player.model:
+        prediction = max(player.model[last_n], key=player.model[last_n].get)
+    else:
+        # Fallback if pattern is unknown
+        prediction = "R"
+
+    # Counter the prediction
+    ideal_response = {"P": "S", "R": "P", "S": "R"}
+    return ideal_response[prediction]
